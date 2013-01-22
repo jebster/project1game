@@ -1,3 +1,7 @@
+
+
+
+
 //instance vars
 var ball;
 var paddle;
@@ -26,15 +30,16 @@ function keyListener(e) {
 
 	if(e.keyCode==37 && paddleLeft > 0){
         //keyCode 37 is left arrow
-        paddleLeft -= 4;
+        paddleLeft -= 10;
         paddle.style.left = paddleLeft + 'px';
     }
 
     if(e.keyCode==39 && paddleLeft < 436){
 		//keyCode 39 is right arrow
-		paddleLeft += 4;
+		paddleLeft += 10;
 		paddle.style.left = paddleLeft + 'px';
    }		
+
 }
 
 function detectCollisions() {
@@ -127,8 +132,7 @@ function restartGame() {
 
 //main loop
 function start() {
-	console.log('entered Start');
-	
+
 	//game loop
 	detectCollisions();
 	render();
@@ -153,6 +157,7 @@ function init() {
 
 	//as long as key is pressed, will activate this event listener
 	document.onkeydown = keyListener;
+
 
 	//start the game 
 	start();

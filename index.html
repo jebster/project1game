@@ -2,16 +2,29 @@
 <html lang="en">
     <head>
         <meta charset="utf-8">
-        <title>Pong Game</title>
+        <title>Project 2</title>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
         
         <link href="css/styles.css" rel="stylesheet" type="text/css" />
-        
-
 
     </head>
 
     <body onLoad="init()">
+
+    	<!-- The canvas for the background -->
+		<canvas id="background">
+			Your browser does not support canvas. Please try again with a different browser.
+		</canvas>
+
+		<!-- The canvas for all enemy balls -->
+		<canvas id="main">
+		</canvas>
+
+		<!-- The canvas for the paddle (can only move up
+         one forth the screen.) -->
+		<canvas id="ship" width="600" height="360">
+
+		</canvas>
 
 		<section id="canvas">
 
