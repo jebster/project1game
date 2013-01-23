@@ -1,15 +1,11 @@
-
-
-
-
 //instance vars
 var ball;
 var paddle;
 var score;
 
 //initial speeds
-var dx = 6;
-var dy = 6;
+var dx = 2;
+var dy = 2;
 var currentScore = 0;
 var timer;
 
@@ -17,6 +13,90 @@ var timer;
 var paddleLeft = 228;
 var ballLeft = 200;
 var ballTop = 4;
+
+
+//Initialize the Game and starts it
+var game = new Game();
+
+function init() {
+
+	game.init();
+	game.start();
+
+}
+
+/**
+ * Define an object to hold all our images for the game so images
+ * are only ever created once. This type of object is known as a 
+ * singleton.
+ */
+var imageRepository = new function() {
+	// Define images
+	this.empty = null;
+
+	//this.background = new Image();
+
+	// Set images src
+	//this.background.src = "imgs/bg.png";
+}
+
+
+/**
+ * Creates the Drawable object which will be the base class for
+ * all drawable objects in the game. Sets up defualt variables
+ * that all child objects will inherit, as well as the defualt
+ * functions. 
+ */
+function Drawable() {	
+
+	this.init = function(x, y) {
+		// Defualt variables
+		this.x = x;
+		this.y = y;
+	}
+
+	this.speed = 0;
+	this.canvasWidth = 0;
+	this.canvasHeight = 0;
+
+	// Define abstract function to be implemented in child objects
+	this.draw = function() {
+	};
+}
+
+
+function Game() {
+
+	this.init = function() {
+		
+		ball = document.getElementById('ball');
+		paddle = document.getElementById('paddle');
+		score = document.getElementById('score');
+
+		//as long as key is pressed, will activate this event listener
+		document.onkeydown = keyListener;
+	}
+
+	this.start = function() {
+
+		//game loop
+		detectCollisions();
+		render();
+		difficulty();
+
+		//end conditions
+		if(ballTop < 470) {
+			//ball is still inside canvas, keep playing
+			timer = setTimeout('game.start()', 10);
+		}
+		else {
+			gameOver();
+		}
+	}
+
+}
+
+
 
 //event listener for keypress
 function keyListener(e) {
@@ -30,13 +110,13 @@ function keyListener(e) {
 
 	if(e.keyCode==37 && paddleLeft > 0){
         //keyCode 37 is left arrow
-        paddleLeft -= 10;
+        paddleLeft -= 6;
         paddle.style.left = paddleLeft + 'px';
     }
 
     if(e.keyCode==39 && paddleLeft < 436){
 		//keyCode 39 is right arrow
-		paddleLeft += 10;
+		paddleLeft += 6;
 		paddle.style.left = paddleLeft + 'px';
    }		
 
@@ -103,7 +183,7 @@ function gameOver() {
 	clearTimeout(timer);
 	score.innerHTML += "         Game Over";
 	score.style.backgroundColor = 'rgb(128, 0, 0)';
-	document.getElementById('restart-btn').getElementsByTagName('button')[0].classList.remove('disabled');
+
 
 }
 
@@ -126,10 +206,10 @@ function restartGame() {
 	//start game again
 	start();
 
-	//disable restart button
-	document.getElementById('restart-btn button').getElementsByTagName('button').className = "btn disabled";
+
 }
 
+/*
 //main loop
 function start() {
 
@@ -147,21 +227,7 @@ function start() {
 		gameOver();
 	}
 }
-
-//initialize the ball
-function init() {
-
-	ball = document.getElementById('ball');
-	paddle = document.getElementById('paddle');
-	score = document.getElementById('score');
-
-	//as long as key is pressed, will activate this event listener
-	document.onkeydown = keyListener;
-
-
-	//start the game 
-	start();
-}
+*/
 
 
 
