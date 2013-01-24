@@ -8,6 +8,9 @@ function init() {
 		game.start();
 }
 
+function restartGame() {
+	document.location.reload();
+}
 
 /**
  * Define an object to hold all our images for the game so images
@@ -162,15 +165,14 @@ function Mainball() {
 
 
 
+	this.speed = 2;
+    this.speedX = this.speed;
+    this.speedY = this.speed;
+    this.leftEdge = 0;
+    this.rightEdge = this.canvasWidth;
+    this.topEdge = 0;
+    this.bottomEdge = this.canvasHeight;
 
-	    this.speed = 3;
-	    this.speedX = this.speed;
-	    this.speedY = this.speed;
-	    this.leftEdge = 0;
-	    this.rightEdge = 500;
-	    this.topEdge = 0;
-	    this.bottomEdge = 300;
-	    
 	//Move the main ball
 	this.draw = function() {
 		
@@ -178,42 +180,35 @@ function Mainball() {
 
 	    this.x += this.speedX;
 	    this.y += this.speedY;
-	    
 
+	    
+	    // X Collision
 	    if (this.x <= this.leftEdge) {       
 	    	this.speedX = this.speed;     
 	    }     
-	    else if (this.x >= this.rightEdge + this.width) {
+	    else if (this.x >= this.rightEdge - this.width) {
 	      this.speedX = -this.speed;
 	    }
 
-	    if (this.y <= this.topEdge) {
+
+	    // Y Collision
+	    if (this.y >= this.bottomEdge - this.height - 16) {
+
+	    	// if hits paddle
+	    	if (this.x + 25 > game.paddle.x && this.x < game.paddle.x + 64)
+	    		this.speedY = -this.speed; // reverse speed
+	    	else
+	    		restartGame();
+	    } else if (this.y <= this.topEdge) { // if hit the top
 	    	this.speedY = this.speed;
 	    }
-	    else if (this.y >= this.bottomEdge) {
-	    	
-	    		
-	    	this.speedY = -this.speed
-	    	
-	    		
-	    	
-	    }
-
-	    //console.log('this.y is ' +this.y);
-
-	    /*
-	    else if (this.y >= this.bottomEdge) {
-	      this.speed = 1.5;
-	      this.speedY = 0;
-	      this.y -= 5;
-	      this.speedX = -this.speed;
-	    } */
 
 		this.context.drawImage(imageRepository.mainball, this.x, this.y);
 	};
 
 }
 Mainball.prototype = new Drawable();
+
 
  /**
  * Creates the Game object which will hold all objects and data for
@@ -264,15 +259,16 @@ function Game() {
 			this.paddle = new Paddle();
 			// Set the paddle to start near the bottom middle of the canvas
 			var paddleStartX = this.paddleCanvas.width/2 - imageRepository.paddle.width;
-			var paddleStartY = this.paddleCanvas.height/4*3 + imageRepository.paddle.height*4;
+			var paddleStartY = this.paddleCanvas.height - imageRepository.paddle.height;
 			this.paddle.init(paddleStartX, paddleStartY, imageRepository.paddle.width,
 			               imageRepository.paddle.height);
 
 			// Initialize the mainball object
 			this.mainball = new Mainball();
-			// Set the mainball to start near the bottom middle of the canvas
+
+			// Set the mainball to start at middle
 			var mainballStartX = this.mainCanvas.width/2 - imageRepository.mainball.width;
-			var mainballStartY = 0;
+			var mainballStartY = this.mainCanvas.height/10;
 
 			this.mainball.init(mainballStartX, mainballStartY, imageRepository.mainball.width, imageRepository.mainball.height);
 
@@ -286,6 +282,7 @@ function Game() {
 
 	// Start the animation loop
 	this.start = function() {
+		alert('Start Game?');
 		this.paddle.draw();
 		this.mainball.draw();
 		animate();
@@ -358,6 +355,7 @@ document.onkeyup = function(e) {
  * otherwise defaults to setTimeout().
  */
 window.requestAnimFrame = (function(){
+
 	return  window.requestAnimationFrame       || 
 			window.webkitRequestAnimationFrame || 
 			window.mozRequestAnimationFrame    || 
