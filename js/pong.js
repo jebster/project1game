@@ -180,7 +180,6 @@ function Mainball() {
 	    this.y += this.speedY;
 	    
 
-
 	    if (this.x <= this.leftEdge) {       
 	    	this.speedX = this.speed;     
 	    }     
@@ -192,10 +191,10 @@ function Mainball() {
 	    	this.speedY = this.speed;
 	    }
 	    else if (this.y >= this.bottomEdge) {
-	    	if(this.x > paddle.x && this.x < paddle.x + 64) {
-	    		console.log('paddle.x is ' +paddle.x);
+	    	
+	    		
 	    	this.speedY = -this.speed
-	    	}
+	    	
 	    		
 	    	
 	    }
