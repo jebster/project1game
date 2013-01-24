@@ -9,7 +9,8 @@ function init() {
 }
 
 function restartGame() {
-	document.location.reload();
+	if (game.mainball.y > game.mainball.bottomEdge)
+		document.location.reload();
 }
 
 /**
