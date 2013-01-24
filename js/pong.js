@@ -1,29 +1,15 @@
-//instance vars
-var ball;
-var paddle;
-var score;
-
-//initial speeds
-var dx = 2;
-var dy = 2;
-var currentScore = 0;
-var timer;
-
-//set initial conditions for ball and paddle
-var paddleLeft = 228;
-var ballLeft = 200;
-var ballTop = 4;
 
 
-//Initialize the Game and starts it
+/**
+ * Initialize the Game and start it.
+ */
 var game = new Game();
 
 function init() {
-
-	game.init();
-	game.start();
-
+	if(game.init())
+		game.start();
 }
+
 
 /**
  * Define an object to hold all our images for the game so images
@@ -32,12 +18,35 @@ function init() {
  */
 var imageRepository = new function() {
 	// Define images
-	this.empty = null;
+	this.background = new Image();
+	this.paddle = new Image();
+	this.mainball = new Image();
 
-	//this.background = new Image();
+	// Ensure all images have loaded before starting the game
+	var numImages = 3;
+	var numLoaded = 0;
+
+	function imageLoaded() {
+		numLoaded++;
+		if (numLoaded === numImages) {
+			window.init();
+		}
+	}
+	this.background.onload = function() {
+		imageLoaded();
+	}
+	this.paddle.onload = function() {
+		imageLoaded();
+	}
+	this.mainball.onload = function() {
+		imageLoaded();
+	}
+
 
 	// Set images src
-	//this.background.src = "imgs/bg.png";
+	this.background.src = "imgs/bg.png";
+	this.paddle.src = "imgs/paddle.png";
+	this.mainball.src = "imgs/main_ball.png";
 }
 
 
@@ -47,12 +56,14 @@ var imageRepository = new function() {
  * that all child objects will inherit, as well as the defualt
  * functions. 
  */
-function Drawable() {	
+function Drawable() {
 
-	this.init = function(x, y) {
+	this.init = function(x, y, width, height) {
 		// Defualt variables
 		this.x = x;
 		this.y = y;
+		this.width = width;
+		this.height = height;
 	}
 
 	this.speed = 0;
@@ -62,172 +73,290 @@ function Drawable() {
 	// Define abstract function to be implemented in child objects
 	this.draw = function() {
 	};
+	this.move = function() {
+	};
 }
 
 
-function Game() {
+/**
+ * Creates the Background object which will become a child of
+ * the Drawable object. The background is drawn on the "background"
+ * canvas and creates the illusion of moving by panning the image.
+ */
+function Background() {
+	this.speed = 1; // Redefine speed of the background for panning
 
+	// Implement abstract function
+	this.draw = function() {
+		// Pan background
+		this.y += this.speed;
+		this.context.drawImage(imageRepository.background, this.x, this.y);
+
+		// Draw another image at the top edge of the first image
+		this.context.drawImage(imageRepository.background, this.x, this.y - this.canvasHeight);
+
+		// If the image scrolled off the screen, reset
+		if (this.y >= this.canvasHeight)
+			this.y = 0;
+	};
+}
+// Set Background to inherit properties from Drawable
+Background.prototype = new Drawable();
+
+
+
+/**
+ * Create the Paddle object that the player controls. The paddle is
+ * drawn on the "paddle" canvas and uses dirty rectangles to move
+ * around the screen.
+ */
+function Paddle() {
+
+	this.speed = 5;
+	var counter = 0;
+
+	this.draw = function() {
+		this.context.drawImage(imageRepository.paddle, this.x, this.y);
+	};
+
+	this.move = function() {	
+
+		counter++;
+
+		// Determine if the action is move action
+		if (KEY_STATUS.left || KEY_STATUS.right) {
+			// The ship moved, so erase it's current image so it can
+			// be redrawn in it's new location
+			this.context.clearRect(this.x, this.y, this.width, this.height);
+
+			// Update x and y according to the direction to move and
+			// redraw the ship. Change the else if's to if statements
+			// to have diagonal movement.
+			if (KEY_STATUS.left) {
+
+				this.x -= this.speed;
+				if (this.x <= 0) // Keep player within the screen
+					this.x = 0;
+			} else if (KEY_STATUS.right) {
+				this.x += this.speed;
+				if (this.x >= this.canvasWidth - this.width)
+					this.x = this.canvasWidth - this.width;
+			} 
+
+			// Finish by redrawing the ship
+			this.draw();
+		}
+	};
+
+
+}
+Paddle.prototype = new Drawable();
+
+
+/**
+ * Create the Main Ball object that the player controls. The Main Ball is
+ * drawn on the "main" canvas and uses dirty rectangles to move
+ * around the screen.
+ */
+function Mainball() {
+
+
+
+	this.spawn = function(x,y, speed) {
+		this.x = x;
+	    this.y = y;
+	    this.speed = speed;
+	    this.speedX = 0;
+	    this.speedY = speed;
+	    this.leftEdge = this.x - 90;
+	    this.rightEdge = this.x + 90;
+	    this.bottomEdge = this.y + 140;
+	    console.log('x is' +x);
+	}
+
+
+	    
+	//Move the main ball
+	this.draw = function() {
+		
+		this.context.clearRect(this.x-1, this.y, this.width+1, this.height);
+
+	    this.x += this.speedX;
+	    this.y += this.speedY;
+
+
+	    if (this.x <= this.leftEdge) {       
+	    	this.speedX = this.speed;     
+	    }     
+	    else if (this.x >= this.rightEdge + this.width) {
+	      this.speedX = -this.speed;
+	    }
+	    else if (this.y >= this.bottomEdge) {
+	      this.speed = 1.5;
+	      this.speedY = 0;
+	      this.y -= 5;
+	      this.speedX = -this.speed;
+	    }
+
+		this.context.drawImage(imageRepository.mainball, this.x, this.y);
+	};
+
+}
+Mainball.prototype = new Drawable();
+
+ /**
+ * Creates the Game object which will hold all objects and data for
+ * the game.
+ */
+function Game() {
+	/*
+	 * Gets canvas information and context and sets up all game
+	 * objects. 
+	 * Returns true if the canvas is supported and false if it
+	 * is not. This is to stop the animation script from constantly
+	 * running on browsers that do not support the canvas.
+	 */
 	this.init = function() {
 		
-		ball = document.getElementById('ball');
-		paddle = document.getElementById('paddle');
-		score = document.getElementById('score');
+		// Get the canvas elements
+		this.bgCanvas = document.getElementById('background');
+		this.paddleCanvas = document.getElementById('paddle');
+		this.mainCanvas = document.getElementById('main');
 
-		//as long as key is pressed, will activate this event listener
-		document.onkeydown = keyListener;
-	}
+		// Test to see if canvas is supported. Only need to
+		// check one canvas
+		if (this.bgCanvas.getContext) {
 
+			this.bgContext = this.bgCanvas.getContext('2d');
+			this.paddleContext = this.paddleCanvas.getContext('2d');
+			this.mainContext = this.mainCanvas.getContext('2d');
+
+			// Initialize objects to contain their context and canvas
+			// information
+			Background.prototype.context = this.bgContext;
+			Background.prototype.canvasWidth = this.bgCanvas.width;
+			Background.prototype.canvasHeight = this.bgCanvas.height;
+
+			Paddle.prototype.context = this.paddleContext;
+			Paddle.prototype.canvasWidth = this.paddleCanvas.width;
+			Paddle.prototype.canvasHeight = this.paddleCanvas.height;
+
+			Mainball.prototype.context = this.mainContext;
+			Mainball.prototype.canvasWidth = this.mainCanvas.width;
+			Mainball.prototype.canvasHeight = this.mainCanvas.height;
+
+			// Initialize the background object
+			this.background = new Background();
+			this.background.init(0,0); // Set draw point to 0,0
+
+			// Initialize the paddle object
+			this.paddle = new Paddle();
+			// Set the paddle to start near the bottom middle of the canvas
+			var paddleStartX = this.paddleCanvas.width/2 - imageRepository.paddle.width;
+			var paddleStartY = this.paddleCanvas.height/4*3 + imageRepository.paddle.height*4;
+			this.paddle.init(paddleStartX, paddleStartY, imageRepository.paddle.width,
+			               imageRepository.paddle.height);
+
+			// Initialize the mainball object
+			this.mainball = new Mainball();
+			// Set the mainball to start near the bottom middle of the canvas
+			var mainballStartX = this.mainCanvas.width/2 - imageRepository.mainball.width;
+			var mainballStartY = this.mainCanvas.height/4*3 + imageRepository.mainball.height*4;
+
+			this.mainball.init(mainballStartX, mainballStartY, imageRepository.mainball.width, imageRepository.mainball.height);
+
+			this.mainball.spawn(mainballStartX, mainballStartY, 3);
+
+			
+
+			return true;
+		} else {
+			return false;
+		}
+	};
+
+	// Start the animation loop
 	this.start = function() {
-
-		//game loop
-		detectCollisions();
-		render();
-		difficulty();
-
-		//end conditions
-		if(ballTop < 470) {
-			//ball is still inside canvas, keep playing
-			timer = setTimeout('game.start()', 10);
-		}
-		else {
-			gameOver();
-		}
-	}
-
+		this.paddle.draw();
+		this.mainball.draw();
+		animate();
+	};
 }
 
 
-
-//event listener for keypress
-function keyListener(e) {
-
-	// keyCode 38 is up arrow
-    // keyCode 40 is down arrow
-	if(!e) {
-		//for IE
-		e = window.event;
-	}
-
-	if(e.keyCode==37 && paddleLeft > 0){
-        //keyCode 37 is left arrow
-        paddleLeft -= 6;
-        paddle.style.left = paddleLeft + 'px';
-    }
-
-    if(e.keyCode==39 && paddleLeft < 436){
-		//keyCode 39 is right arrow
-		paddleLeft += 6;
-		paddle.style.left = paddleLeft + 'px';
-   }		
-
+/**
+ * The animation loop. Calls the requestAnimationFrame shim to
+ * optimize the game loop and draws all game objects. This
+ * function must be a gobal function and cannot be within an
+ * object.
+ */
+function animate() {
+	requestAnimFrame( animate );
+	game.background.draw();
+	game.mainball.draw();
+	game.paddle.move();
 }
 
-function detectCollisions() {
-	//just reflect the ball on a collision
-	if(collisionX())
-		dx = dx * -1;
-	if(collisionY())
-		dy = dy * -1;
+
+// The keycodes that will be mapped when a user presses a button.
+// Original code by Doug McInnes
+KEY_CODES = {
+  32: 'space',
+  37: 'left',
+  39: 'right',
 }
 
-	function collisionX() {
-		//check left and right boundaries
-		if(ballLeft < 4 || ballLeft > 480)
-			return true;
-		return false;
-	}
-
-	function collisionY() {
-		//check if at top of playing area
-		if(ballTop < 4)
-			return true;
-
-		//check to see if ball collided with paddle
-		if(ballTop > 450) {
-			if(ballLeft > paddleLeft && ballLeft < paddleLeft + 64)
-				return true;
-		}
-		return false;
-	}
-
-function render() {
-	moveBall();
-	updateScore();
+// Creates the array to hold the KEY_CODES and sets all their values
+// to false. Checking true/flase is the quickest way to check status
+// of a key press and which one was pressed when determining
+// when to move and which direction.
+KEY_STATUS = {};
+for (code in KEY_CODES) {
+  KEY_STATUS[KEY_CODES[code]] = false;
+}
+/**
+ * Sets up the document to listen to onkeydown events (fired when
+ * any key on the keyboard is pressed down). When a key is pressed,
+ * it sets the appropriate direction to true to let us know which
+ * key it was.
+ */
+document.onkeydown = function(e) {
+  // Firefox and opera use charCode instead of keyCode to
+  // return which key was pressed.
+  var keyCode = (e.keyCode) ? e.keyCode : e.charCode;
+  if (KEY_CODES[keyCode]) {
+	e.preventDefault();
+	KEY_STATUS[KEY_CODES[keyCode]] = true;
+  }
+}
+/**
+ * Sets up the document to listen to ownkeyup events (fired when
+ * any key on the keyboard is released). When a key is released,
+ * it sets teh appropriate direction to false to let us know which
+ * key it was.
+ */
+document.onkeyup = function(e) {
+  var keyCode = (e.keyCode) ? e.keyCode : e.charCode;
+  if (KEY_CODES[keyCode]) {
+    e.preventDefault();
+    KEY_STATUS[KEY_CODES[keyCode]] = false;
+  }
 }
 
-	function moveBall() {
-		ballLeft += dx;
-		ballTop += dy;
-		ball.style.left = ballLeft + 'px';
-		ball.style.top = ballTop + 'px';
-	}
-
-	function updateScore() {
-		currentScore += 5;
-		score.innerHTML = 'Score: ' + currentScore;
-	}
-
-
-function difficulty() {
-	//as the game progresses, increase magnitude of the vertical speed
-	if(currentScore % 1000 == 0) {
-		if(dy > 0)
-			dy += 1;
-		else
-			dy -= 1;
-	}
-}
-
-function gameOver() {
-	//end the game by clearing the timer and modifying the score label
-	clearTimeout(timer);
-	score.innerHTML += "         Game Over";
-	score.style.backgroundColor = 'rgb(128, 0, 0)';
-
-
-}
-
-function restartGame() {
-	//initial speeds
-	dx = 6;
-	dy = 6;
-	currentScore = 0;
-
-	//set initial conditions for ball and paddle
-	paddleLeft = 228;
- 	ballLeft = 200;
- 	ballTop = 4;
-
-	paddle.style.left = paddleLeft + 'px';
- 	
-	ball.style.left = ballLeft + 'px';
-	ball.style.top = ballTop + 'px';
-
-	//start game again
-	start();
-
-
-}
-
-/*
-//main loop
-function start() {
-
-	//game loop
-	detectCollisions();
-	render();
-	difficulty();
-
-	//end conditions
-	if(ballTop < 470) {
-		//ball is still inside canvas, keep playing
-		timer = setTimeout('start()', 50);
-	}
-	else {
-		gameOver();
-	}
-}
-*/
-
+/**	
+ * requestAnim shim layer by Paul Irish
+ * Finds the first API that works to optimize the animation loop, 
+ * otherwise defaults to setTimeout().
+ */
+window.requestAnimFrame = (function(){
+	return  window.requestAnimationFrame       || 
+			window.webkitRequestAnimationFrame || 
+			window.mozRequestAnimationFrame    || 
+			window.oRequestAnimationFrame      || 
+			window.msRequestAnimationFrame     || 
+			function(/* function */ callback, /* DOMElement */ element){
+				window.setTimeout(callback, 1000 / 60);
+			};
+})();
 
 
