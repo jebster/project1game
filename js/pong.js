@@ -1,5 +1,3 @@
-
-
 /**
  * Initialize the Game and start it.
  */
@@ -17,6 +15,7 @@ function init() {
  * singleton.
  */
 var imageRepository = new function() {
+
 	// Define images
 	this.background = new Image();
 	this.paddle = new Image();
@@ -89,7 +88,7 @@ function Background() {
 	// Implement abstract function
 	this.draw = function() {
 		// Pan background
-		this.y += this.speed;
+		//this.y += this.speed;
 		this.context.drawImage(imageRepository.background, this.x, this.y);
 
 		// Draw another image at the top edge of the first image
@@ -143,7 +142,7 @@ function Paddle() {
 					this.x = this.canvasWidth - this.width;
 			} 
 
-			// Finish by redrawing the ship
+			// Finish by redrawing the paddle
 			this.draw();
 		}
 	};
@@ -151,6 +150,7 @@ function Paddle() {
 
 }
 Paddle.prototype = new Drawable();
+
 
 
 /**
@@ -162,19 +162,14 @@ function Mainball() {
 
 
 
-	this.spawn = function(x,y, speed) {
-		this.x = x;
-	    this.y = y;
-	    this.speed = speed;
-	    this.speedX = 0;
-	    this.speedY = speed;
-	    this.leftEdge = this.x - 90;
-	    this.rightEdge = this.x + 90;
-	    this.bottomEdge = this.y + 140;
-	    console.log('x is' +x);
-	}
 
-
+	    this.speed = 3;
+	    this.speedX = this.speed;
+	    this.speedY = this.speed;
+	    this.leftEdge = 0;
+	    this.rightEdge = 500;
+	    this.topEdge = 0;
+	    this.bottomEdge = 300;
 	    
 	//Move the main ball
 	this.draw = function() {
@@ -183,6 +178,7 @@ function Mainball() {
 
 	    this.x += this.speedX;
 	    this.y += this.speedY;
+	    
 
 
 	    if (this.x <= this.leftEdge) {       
@@ -191,12 +187,28 @@ function Mainball() {
 	    else if (this.x >= this.rightEdge + this.width) {
 	      this.speedX = -this.speed;
 	    }
+
+	    if (this.y <= this.topEdge) {
+	    	this.speedY = this.speed;
+	    }
+	    else if (this.y >= this.bottomEdge) {
+	    	if(this.x > paddle.x && this.x < paddle.x + 64) {
+	    		console.log('paddle.x is ' +paddle.x);
+	    	this.speedY = -this.speed
+	    	}
+	    		
+	    	
+	    }
+
+	    //console.log('this.y is ' +this.y);
+
+	    /*
 	    else if (this.y >= this.bottomEdge) {
 	      this.speed = 1.5;
 	      this.speedY = 0;
 	      this.y -= 5;
 	      this.speedX = -this.speed;
-	    }
+	    } */
 
 		this.context.drawImage(imageRepository.mainball, this.x, this.y);
 	};
@@ -217,7 +229,7 @@ function Game() {
 	 * running on browsers that do not support the canvas.
 	 */
 	this.init = function() {
-		
+
 		// Get the canvas elements
 		this.bgCanvas = document.getElementById('background');
 		this.paddleCanvas = document.getElementById('paddle');
@@ -261,11 +273,9 @@ function Game() {
 			this.mainball = new Mainball();
 			// Set the mainball to start near the bottom middle of the canvas
 			var mainballStartX = this.mainCanvas.width/2 - imageRepository.mainball.width;
-			var mainballStartY = this.mainCanvas.height/4*3 + imageRepository.mainball.height*4;
+			var mainballStartY = 0;
 
 			this.mainball.init(mainballStartX, mainballStartY, imageRepository.mainball.width, imageRepository.mainball.height);
-
-			this.mainball.spawn(mainballStartX, mainballStartY, 3);
 
 			
 
