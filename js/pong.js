@@ -9,6 +9,8 @@ function init() {
 }
 
 function restartGame() {
+
+	// make it more realistic, wait till ball exits the whole screen
 	if (game.mainball.y > game.mainball.bottomEdge)
 		document.location.reload();
 }
@@ -130,6 +132,7 @@ function Paddle() {
 		if (KEY_STATUS.left || KEY_STATUS.right) {
 			// The ship moved, so erase it's current image so it can
 			// be redrawn in it's new location
+			// This is an optimization - don't have to redraw the whole canvas!
 			this.context.clearRect(this.x, this.y, this.width, this.height);
 
 			// Update x and y according to the direction to move and
@@ -155,16 +158,12 @@ function Paddle() {
 }
 Paddle.prototype = new Drawable();
 
-
-
 /**
  * Create the Main Ball object that the player controls. The Main Ball is
  * drawn on the "main" canvas and uses dirty rectangles to move
  * around the screen.
  */
 function Mainball() {
-
-
 
 	this.speed = 2;
     this.speedX = this.speed;
